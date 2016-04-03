@@ -1,0 +1,66 @@
+from django.views.generic import View, TemplateView
+from django.http import HttpResponse, HttpResponseRedirect
+import json
+# import inspect
+
+
+class CommonsMixin(object):
+
+    # TODO
+    # To get called inside any http request handler
+    # @staticmethod
+    # def get_data(request, name, default=None):
+    #     caller_name = inspect.stack()[1][3]
+    #     return request.caller_name.upper().get(name, default)
+
+    @staticmethod
+    def debug():
+        import ipdb
+        ipdb.set_trace()
+
+
+class BaseView(TemplateView, CommonsMixin):
+
+    csrf_exempt = True
+
+    @staticmethod
+    def response(response, no_cache=False, headers=None):
+        response = HttpResponse(response)
+        if no_cache:
+            response["Cache-Control"] = "max-age=0"
+        for key, value in headers.iteritems():
+            response[key] = value
+        return response
+
+    @staticmethod
+    def server_error(response):
+        response = HttpResponse(response)
+        response.status_code = 500
+        return response
+
+    @staticmethod
+    def redirect(url):
+        return HttpResponseRedirect(url)
+
+
+class AjaxView(View, CommonsMixin):
+
+    @staticmethod
+    def json_response(response):
+        return HttpResponse(json.dumps(response))
+
+    @staticmethod
+    def json_loads(data):
+        return json.loads(data)
+
+    @staticmethod
+    def json_dumps(data):
+        return json.dumps(data)
+
+    def success_response(self, **kwargs):
+        response = {"status": "success"}
+        response.update(kwargs)
+        return self.json_response(response)
+
+    def failure_response(self, error):
+        return self.json_response({"status": "failure", "error": error})

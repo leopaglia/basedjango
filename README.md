@@ -1,0 +1,3 @@
+# basedjango
+Basic Django app
+
