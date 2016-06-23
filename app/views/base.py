@@ -25,27 +25,19 @@ class BaseView(TemplateView, CommonsMixin):
 
     csrf_exempt = True
 
-    @staticmethod
-    def response(response, no_cache=False, headers=None):
+    @classmethod
+    def response(cls, response, no_cache=False, headers=None):
         response = HttpResponse(response)
-        if no_cache:
-            response["Cache-Control"] = "max-age=0"
-        if headers is not None:
-            for key, value in headers.iteritems():
-                response[key] = value
+        response = cls.__cache_headers(response, no_cache, headers)
         return response
 
-    @staticmethod
-    def download(filepath, content_type, delete=False, no_cache=False, headers=None):
+    @classmethod
+    def download(cls, filepath, content_type, delete=False, no_cache=False, headers=None):
         d_file = open(filepath, 'r')
         filename = ntpath.basename(filepath)
         response = HttpResponse(d_file, content_type=content_type)
         response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-        if no_cache:
-            response["Cache-Control"] = "max-age=0"
-        if headers is not None:
-            for key, value in headers.iteritems():
-                response[key] = value
+        response = cls.__cache_headers(response, no_cache, headers)
         if delete:
             os.remove(filepath)
         return response
@@ -59,6 +51,15 @@ class BaseView(TemplateView, CommonsMixin):
     @staticmethod
     def redirect(url):
         return HttpResponseRedirect(url)
+
+    @staticmethod
+    def __cache_headers(response, no_cache, headers):
+        if no_cache:
+            response["Cache-Control"] = "max-age=0"
+        if headers is not None:
+            for key, value in headers.iteritems():
+                response[key] = value
+        return response
 
 
 class AjaxView(View, CommonsMixin):
