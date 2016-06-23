@@ -1,5 +1,7 @@
 from django.views.generic import View, TemplateView
 from django.http import HttpResponse, HttpResponseRedirect
+import os
+import ntpath
 import json
 # import inspect
 
@@ -28,8 +30,24 @@ class BaseView(TemplateView, CommonsMixin):
         response = HttpResponse(response)
         if no_cache:
             response["Cache-Control"] = "max-age=0"
-        for key, value in headers.iteritems():
-            response[key] = value
+        if headers is not None:
+            for key, value in headers.iteritems():
+                response[key] = value
+        return response
+
+    @staticmethod
+    def download(filepath, content_type, delete=False, no_cache=False, headers=None):
+        d_file = open(filepath, 'r')
+        filename = ntpath.basename(filepath)
+        response = HttpResponse(d_file, content_type=content_type)
+        response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+        if no_cache:
+            response["Cache-Control"] = "max-age=0"
+        if headers is not None:
+            for key, value in headers.iteritems():
+                response[key] = value
+        if delete:
+            os.remove(filepath)
         return response
 
     @staticmethod
